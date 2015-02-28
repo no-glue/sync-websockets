@@ -83,10 +83,29 @@ class WebSocketThread extends Thread {
 }
 
 class MessageQueue<Type> {
-  Queue<Type> q = new LinkedList<Type>();
-  boolean busy = false;
-  synchronized void pop() throws InterruptedException {
+  private Queue<Type> q = new LinkedList<Type>();
+  private boolean notPushing = true;
+  synchronized Type pop() throws InterruptedException {
+    while(q.isEmpty()) {
+      wait();
+    }
+    Type value = q.remove();
+    notifyAll();
+    return value;
   }
-  synchronized void push() throws InterruptedException {
+  synchronized void doPush(Type message) throws InterruptedException {
+    while(!notPushing) {
+      wait();
+    }
+    q.add(message);
+    notPushing = false;
+    notifyAll();
+  }
+  synchronized void doNotPush() throws InteruptedException {
+    while(notPushing) {
+      wait();
+    }
+    notPushing = true;
+    notifyAll();
   }
 }
