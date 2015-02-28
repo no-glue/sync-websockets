@@ -6,6 +6,9 @@ import com.pmeade.websocket.net.WebSocketServerSocket;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * @author pmeade
@@ -77,4 +80,13 @@ class WebSocketThread extends Thread {
     private boolean finished = false;
     
     private final WebSocket webSocket;
+}
+
+class MessageQueue<Type> {
+  Queue<Type> q = new LinkedList<Type>();
+  boolean busy = false;
+  synchronized void pop() throws InterruptedException {
+  }
+  synchronized void push() throws InterruptedException {
+  }
 }
