@@ -101,7 +101,7 @@ class MessageQueue<Type> {
     notPushing = false;
     notifyAll();
   }
-  synchronized void doNotPush() throws InteruptedException {
+  synchronized void doNotPush() throws InterruptedException {
     while(notPushing) {
       wait();
     }
