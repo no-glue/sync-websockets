@@ -59,15 +59,21 @@ class WebSocketThread extends Thread {
         try {
             WebSocketServerOutputStream wsos = webSocket.getOutputStream();
             InputStream wsis = webSocket.getInputStream();
-            LinkedList<Integer> buffer = new LinkedList<Integer>();
+            LinkedList<Byte> buffer = new LinkedList<Byte>();
+            byte[] bufferContent;
             int data = wsis.read();
             while (finished == false && data != -1) {
                 if(data == 10) {
-                  buffer.add(0);
-                  wsos.writeString(new String(buffer.toArray(), "UTF-8"));
+                  buffer.add((byte)0);
+                  bufferContent = new byte[buffer.size()];
+                  for(int i = 0; i < buffer.size(); i++) {
+                    bufferContent[i] = buffer.get(i);
+                  }
+                  wsos.writeString(new String(bufferContent));
                   buffer.clear();
+                  bufferContent = null;
                 } else {
-                  buffer.add(data);
+                  buffer.add((byte)data);
                 }
                 data = wsis.read();
             }
