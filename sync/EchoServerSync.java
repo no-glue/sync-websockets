@@ -116,3 +116,13 @@ class MessageQueue<Type> {
     notifyAll();
   }
 }
+
+class Accumulator<Type> {
+  LinkedList<Type> buffer = new LinkedList<Type>();
+  public void addByte(byte thing) {
+    buffer.add(thing);
+  }
+  public void clear() {
+    buffer.clear();
+  }
+}
