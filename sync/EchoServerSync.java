@@ -9,6 +9,7 @@ import java.net.ServerSocket;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Arrays;
 
 /**
  * @author pmeade
@@ -58,9 +59,16 @@ class WebSocketThread extends Thread {
         try {
             WebSocketServerOutputStream wsos = webSocket.getOutputStream();
             InputStream wsis = webSocket.getInputStream();
+            LinkedList<Integer> buffer = new LinkedList<Integer>();
             int data = wsis.read();
             while (finished == false && data != -1) {
-                wsos.writeString("Data received: " + (char)data);
+                if(data == 10) {
+                  buffer.add(0);
+                  wsos.writeString(new String(buffer.toArray(), "UTF-8"));
+                  buffer.clear();
+                } else {
+                  buffer.add(data);
+                }
                 data = wsis.read();
             }
         } catch (IOException e) {
