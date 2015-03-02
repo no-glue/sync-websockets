@@ -61,7 +61,6 @@ class WebSocketThread extends Thread {
             int data = wsis.read();
             while (finished == false && data != -1) {
                 wsos.writeString("Data received: " + (char)data);
-                messageQueue.push((char)data);
                 data = wsis.read();
             }
         } catch (IOException e) {
