@@ -31,7 +31,8 @@ public class EchoServerSync {
         ServerSocket serverSocket = new ServerSocket(PORT);
         WebSocketServerSocket webSocketServerSocket
                 = new WebSocketServerSocket(serverSocket);
-        MessageQueue<string> q = new MessageQueue<string>();
+        MessageQueue<String> q = new MessageQueue<String>();
+        LinkedList<WebSocket> connections = new LinkedList<WebSocket>();
         while(finished == false) {
             WebSocket socket = webSocketServerSocket.accept();
             new WebSocketThread(socket).start();
@@ -85,7 +86,6 @@ class WebSocketThread extends Thread {
 
 class MessageQueue<Type> {
   private Queue<Type> q = new LinkedList<Type>();
-  private boolean somethingToPush = false;
   synchronized Type pop() throws InterruptedException {
     while(q.isEmpty()) {
       wait();
@@ -94,19 +94,8 @@ class MessageQueue<Type> {
     notifyAll();
     return value;
   }
-  synchronized void doPush(Type message) throws InterruptedException {
-    while(!somethingToPush) {
-      wait();
-    }
+  synchronized void push(Type message) throws InterruptedException {
     q.add(message);
-    somethingToPush = false;
-    notifyAll();
-  }
-  synchronized void doNotPush() throws InterruptedException {
-    while(somethingToPush) {
-      wait();
-    }
-    somethingToPush= true;
     notifyAll();
   }
 }
