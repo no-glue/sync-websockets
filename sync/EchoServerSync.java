@@ -31,11 +31,12 @@ public class EchoServerSync {
         ServerSocket serverSocket = new ServerSocket(PORT);
         WebSocketServerSocket webSocketServerSocket
                 = new WebSocketServerSocket(serverSocket);
-        MessageQueue<String> q = new MessageQueue<String>();
+        MessageQueue<String> messageQueue = new MessageQueue<String>();
         LinkedList<WebSocket> connections = new LinkedList<WebSocket>();
         while(finished == false) {
             WebSocket socket = webSocketServerSocket.accept();
-            new WebSocketThread(socket).start();
+            connections.add(socket);
+            new WebSocketThread(socket, messageQueue).start();
         }
     }
     
@@ -47,8 +48,9 @@ public class EchoServerSync {
 }
 
 class WebSocketThread extends Thread {
-    public WebSocketThread(WebSocket socket) {
+    public WebSocketThread(WebSocket socket, MessageQueue<?> messageQueue) {
         this.webSocket = socket;
+        this.messageQueue = messageQueue;
     }
     
     @Override
@@ -82,6 +84,7 @@ class WebSocketThread extends Thread {
     private boolean finished = false;
     
     private final WebSocket webSocket;
+    private MessageQueue<?> messageQueue;
 }
 
 class MessageQueue<Type> {
