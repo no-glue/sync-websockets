@@ -34,10 +34,11 @@ public class EchoServerSync {
                 = new WebSocketServerSocket(serverSocket);
         MessageQueue<String> messageQueue = new MessageQueue<String>();
         LinkedList<WebSocket> connections = new LinkedList<WebSocket>();
+        ByteAccumulator buffer = new ByteAccumulator();
         while(finished == false) {
             WebSocket socket = webSocketServerSocket.accept();
             connections.add(socket);
-            new WebSocketThread(socket, messageQueue).start();
+            new WebSocketThread(socket, messageQueue, buffer).start();
         }
     }
     
@@ -49,9 +50,10 @@ public class EchoServerSync {
 }
 
 class WebSocketThread extends Thread {
-    public WebSocketThread(WebSocket socket, MessageQueue<?> messageQueue) {
+    public WebSocketThread(WebSocket socket, MessageQueue<?> messageQueue, ByteAccumulator buffer) {
         this.webSocket = socket;
         this.messageQueue = messageQueue;
+        this.buffer = buffer;
     }
     
     @Override
@@ -59,16 +61,13 @@ class WebSocketThread extends Thread {
         try {
             WebSocketServerOutputStream wsos = webSocket.getOutputStream();
             InputStream wsis = webSocket.getInputStream();
-            LinkedList<Byte> buffer = new LinkedList<Byte>();
             byte[] bufferContent;
             int data = wsis.read();
             while (finished == false && data != -1) {
                 if(data == 10) {
                   buffer.add((byte)0);
                   bufferContent = new byte[buffer.size()];
-                  for(int i = 0; i < buffer.size(); i++) {
-                    bufferContent[i] = buffer.get(i);
-                  }
+                  buffer.toNativeArray(bufferContent);
                   wsos.writeString(new String(bufferContent));
                   buffer.clear();
                   bufferContent = null;
@@ -99,6 +98,7 @@ class WebSocketThread extends Thread {
     
     private final WebSocket webSocket;
     private MessageQueue<?> messageQueue;
+    private ByteAccumulator buffer;
 }
 
 class MessageQueue<Type> {
@@ -117,10 +117,18 @@ class MessageQueue<Type> {
   }
 }
 
-class Accumulator<Type> {
-  LinkedList<Type> buffer = new LinkedList<Type>();
-  public void addByte(byte thing) {
+class ByteAccumulator {
+  LinkedList<Byte> buffer = new LinkedList<Byte>();
+  public void add(byte thing) {
     buffer.add(thing);
+  }
+  public void toNativeArray(byte[] buff) {
+    for(int i = 0; i < buffer.size(); i++) {
+      buff[i] = buffer.get(i);
+    }
+  }
+  public int size() {
+    return buffer.size();
   }
   public void clear() {
     buffer.clear();
