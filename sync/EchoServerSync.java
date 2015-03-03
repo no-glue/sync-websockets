@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.net.ServerSocket;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.Queue;
 import java.util.Arrays;
 
@@ -35,6 +36,7 @@ public class EchoServerSync {
         StringMessageQueue messageQueue = new StringMessageQueue();
         LinkedList<WebSocket> connections = new LinkedList<WebSocket>();
         ByteAccumulator buffer = new ByteAccumulator();
+        new WebSocketConsumerThread(messageQueue, connections).start();
         while(finished == false) {
             WebSocket socket = webSocketServerSocket.accept();
             connections.add(socket);
@@ -59,7 +61,6 @@ class WebSocketThread extends Thread {
     @Override
     public void run() {
         try {
-            WebSocketServerOutputStream wsos = webSocket.getOutputStream();
             InputStream wsis = webSocket.getInputStream();
             byte[] bufferContent;
             int data = wsis.read();
@@ -68,7 +69,6 @@ class WebSocketThread extends Thread {
                   buffer.add((byte)0);
                   bufferContent = new byte[buffer.size()];
                   buffer.toNativeArray(bufferContent);
-                  wsos.writeString(new String(bufferContent));
                   messageQueue.push(new String(bufferContent));
                   buffer.clear();
                   bufferContent = null;
@@ -104,6 +104,41 @@ class WebSocketThread extends Thread {
     private final WebSocket webSocket;
     private StringMessageQueue messageQueue;
     private ByteAccumulator buffer;
+}
+
+class WebSocketConsumerThread extends Thread {
+  public WebSocketConsumerThread(StringMessageQueue messageQueue, LinkedList<WebSocket> connections) {
+    this.messageQueue = messageQueue;
+    this.connections = connections;
+  }
+  public void run() {
+    String message = "";
+    WebSocket webSocket = null;
+    WebSocketServerOutputStream wsos = null;
+    while(!finished) {
+      try {
+        message = messageQueue.pop();
+        ListIterator<WebSocket> listIterator = connections.listIterator();
+        while(listIterator.hasNext()) {
+          webSocket = listIterator.next();
+          wsos = webSocket.getOutputStream();
+          wsos.writeString(message);
+        }
+      } catch(IOException e) {
+        finished = true;
+        System.err.println(e.getLocalizedMessage());
+        e.printStackTrace(System.err);
+      }
+      catch(InterruptedException e) {
+        finished = true;
+        System.err.println(e.getLocalizedMessage());
+        e.printStackTrace(System.err);
+      }
+    }
+  }
+  private StringMessageQueue messageQueue;
+  private LinkedList<WebSocket> connections;
+  private boolean finished = false;
 }
 
 class StringMessageQueue {
