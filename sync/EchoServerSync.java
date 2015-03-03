@@ -171,7 +171,7 @@ class StringMessageQueue {
 
 /**
  * byte accumulator
- * accumulates messages received from clients
+ * accumulates bytes received from clients
  */
 class ByteAccumulator {
   LinkedList<Byte> buffer = new LinkedList<Byte>();
