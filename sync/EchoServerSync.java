@@ -32,7 +32,7 @@ public class EchoServerSync {
         ServerSocket serverSocket = new ServerSocket(PORT);
         WebSocketServerSocket webSocketServerSocket
                 = new WebSocketServerSocket(serverSocket);
-        MessageQueue<String> messageQueue = new MessageQueue<String>();
+        StringMessageQueue messageQueue = new StringMessageQueue();
         LinkedList<WebSocket> connections = new LinkedList<WebSocket>();
         ByteAccumulator buffer = new ByteAccumulator();
         while(finished == false) {
@@ -50,7 +50,7 @@ public class EchoServerSync {
 }
 
 class WebSocketThread extends Thread {
-    public WebSocketThread(WebSocket socket, MessageQueue<?> messageQueue, ByteAccumulator buffer) {
+    public WebSocketThread(WebSocket socket, StringMessageQueue messageQueue, ByteAccumulator buffer) {
         this.webSocket = socket;
         this.messageQueue = messageQueue;
         this.buffer = buffer;
@@ -69,6 +69,7 @@ class WebSocketThread extends Thread {
                   bufferContent = new byte[buffer.size()];
                   buffer.toNativeArray(bufferContent);
                   wsos.writeString(new String(bufferContent));
+                  messageQueue.push(new String(bufferContent));
                   buffer.clear();
                   bufferContent = null;
                 } else {
@@ -77,6 +78,10 @@ class WebSocketThread extends Thread {
                 data = wsis.read();
             }
         } catch (IOException e) {
+            finished = true;
+            System.err.println(e.getLocalizedMessage());
+            e.printStackTrace(System.err);
+        } catch(InterruptedException e) {
             finished = true;
             System.err.println(e.getLocalizedMessage());
             e.printStackTrace(System.err);
@@ -97,21 +102,21 @@ class WebSocketThread extends Thread {
     private boolean finished = false;
     
     private final WebSocket webSocket;
-    private MessageQueue<?> messageQueue;
+    private StringMessageQueue messageQueue;
     private ByteAccumulator buffer;
 }
 
-class MessageQueue<Type> {
-  private Queue<Type> q = new LinkedList<Type>();
-  synchronized Type pop() throws InterruptedException {
+class StringMessageQueue {
+  private Queue<String> q = new LinkedList<String>();
+  synchronized String pop() throws InterruptedException {
     while(q.isEmpty()) {
       wait();
     }
-    Type value = q.remove();
+    String value = q.remove();
     notifyAll();
     return value;
   }
-  synchronized void push(Type message) throws InterruptedException {
+  synchronized void push(String message) throws InterruptedException {
     q.add(message);
     notifyAll();
   }
