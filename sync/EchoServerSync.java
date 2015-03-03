@@ -51,6 +51,10 @@ public class EchoServerSync {
     private boolean finished = false;
 }
 
+/**
+ * web socket producer thread
+ * accepts content from web sockets and places them in the queue
+ */
 class WebSocketThread extends Thread {
     public WebSocketThread(WebSocket socket, StringMessageQueue messageQueue, ByteAccumulator buffer) {
         this.webSocket = socket;
@@ -106,6 +110,10 @@ class WebSocketThread extends Thread {
     private ByteAccumulator buffer;
 }
 
+/**
+ * web socket consumer thread
+ * takes messages from message queue and sends them to clients
+ */
 class WebSocketConsumerThread extends Thread {
   public WebSocketConsumerThread(StringMessageQueue messageQueue, LinkedList<WebSocket> connections) {
     this.messageQueue = messageQueue;
@@ -141,6 +149,10 @@ class WebSocketConsumerThread extends Thread {
   private boolean finished = false;
 }
 
+/**
+ * message queue
+ * keeps received messages
+ */
 class StringMessageQueue {
   private Queue<String> q = new LinkedList<String>();
   synchronized String pop() throws InterruptedException {
@@ -157,6 +169,10 @@ class StringMessageQueue {
   }
 }
 
+/**
+ * byte accumulator
+ * accumulates messages received from clients
+ */
 class ByteAccumulator {
   LinkedList<Byte> buffer = new LinkedList<Byte>();
   public void add(byte thing) {
